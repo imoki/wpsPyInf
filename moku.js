@@ -1,8 +1,8 @@
 /*
     作者: imoki
-    仓库: https://github.com/imoki/wpsPyInf
+    仓库: https://github.com/imoki/
     公众号：默库
-    更新时间：20240720
+    更新时间：20240721
     脚本：moku.js 粘贴到金山文档内时，请改名为“默库”。
     说明：注意！请将文档名和脚本名都起名为“默库”，脚本才能正常运行。
           1. 第一步，首次运行“默库”脚本（仓库中的“moku.js”）会生成wps表，请先填写好wps表的内容，只填wps_sid即可。
@@ -24,7 +24,7 @@ var onlyDocs = [] // 仅读取哪些文档
 var row = 0;
 var col = 0;
 var maxRow = 100; // 规定最大行
-var maxCol = 16; // 规定最大列
+var maxCol = 26; // 规定最大列
 var workbook = [] // 存储已存在表数组
 var colNum = ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M', 'N', 'O', 'P', 'Q']
 
@@ -45,6 +45,7 @@ function sleep(d) {
   for (var t = Date.now(); Date.now() - t <= d; );
 }
 
+// ======================生成表修改相关开始======================
 // 激活工作表函数
 function ActivateSheet(sheetName) {
     let flag = 0;
@@ -104,111 +105,6 @@ function createSheet(name) {
       name
     )
   }
-}
-
-
-// 获取wps_sid、cookie
-function getWpsSid(){
-  // flagConfig = ActivateSheet(sheetNameSubConfig); // 激活wps配置表
-  // 主配置工作表存在
-  if (1) {
-    console.log("🍳 开始读取wps配置表");
-    for (let i = 2; i <= 100; i++) {
-      // 读取wps表格配置
-      wps_sid = Application.Range("A" + i).Text; // 以第一个wps为准
-      // name = Application.Range("H" + i).Text;
-      
-      excludeDocs = Application.Range("C" + i).Text.split("&")
-      onlyDocs = Application.Range("D" + i).Text.split("&")
-
-      break
-    }
-  }
-  return wps_sid
-  
-  // filename = name
-}
-
-
-
-// 判断是否为xlsx文件
-function juiceXLSX(name){
-  let flag = 0
-  let array= name.split(".") // 使用|作为分隔符
-  if(array.length == 2 && (array[1] == "xlsx" || array[1] == "ksheet")){
-    flag = 1
-  }
-  return flag 
-}
-
-// 判断是否为要排除文件
-function juiceDocs(name){
-  let flag = 0
-  if((excludeDocs.length == 1 && excludeDocs[0] == "") || excludeDocs.length == 0){
-    flag = 0
-    // console.log("excludeDocs不符合")
-  }else{
-    for(let i= 0; i<excludeDocs.length; i++){
-      if(name == excludeDocs[i]){
-        flag = 1  // 找到要排除的文档了
-        // console.log("找到要排除的文档了")
-      }
-    }
-  }
-  
-  return flag 
-}
-
-// 判断是否为仅读取的文档
-function juiceOnlyRead(name){
-  let flag = 0  // 不读取
-  if(onlyDocs == "@all"){
-    flag = 1  // 所有都读取
-    // console.log("所有都读取")
-  }else{
-    for(let i= 0; i<onlyDocs.length; i++){
-      if(name == onlyDocs[i]){
-        flag = 1  // 找到要读取的文档了
-        // console.log("找到要读取的文档了")
-      }
-    }
-  }
-  
-  return flag 
-}
-
-// 判断是否存在定时任务
-function taskExist(file_id){
-  url = "https://www.kdocs.cn/api/v3/ide/file/" + file_id + "/cron_tasks";
-  // console.log(url)
-  // 查看定时任务
-  resp = HTTP.get(
-    url,
-    { headers: headers }
-  );
-
-  resp = resp.json()
-  // console.log(resp)
-  // list -> 数组 -> file_id、task_id、script_name，cron_detail->字典
-  cronlist = resp["list"]
-  sleep(3000)
-  return cronlist
-}
-
-
-// 创建脚本
-function createPyScript(url, headers){
-  data = {"script_name": sheetName,"script":"","ext":"py"}
-  let resp = HTTP.post(
-    url,
-    data,
-    { headers: headers }
-  );
-  // {"id":""}
-  resp = resp.json()
-  id = resp["id"]
-
-  return id
 }
 
 // 判断表格行列数，并记录目前已写入的表格行列数。目的是为了不覆盖原有数据，便于更新
@@ -302,14 +198,15 @@ function createConfig(){
   {
     // CONFIG表内容
     // 推送昵称(推送位置标识)选项：若“是”则推送“账户名称”，若账户名称为空则推送“单元格Ax”，这两种统称为位置标识。若“否”，则不推送位置标识
-    
-    testPythonScript = "import requests\r\n\r\n# 推送\r\ndef push(pushType, key):\r\n  if key != \"\" :\r\n      if pushType.lower() == \"bark\":\r\n        url = \"https://api.day.app/\" + key + \"/运行正常\"\r\n      elif pushType.lower()  == \"pushplus\":\r\n        url = \"http://www.pushplus.plus/send?token=\" + key + \"&content=运行正常\"\r\n      elif pushType.lower()  == \"serverchan\":\r\n        url = \"https://sctapi.ftqq.com/\" + key + \".send?title=运行结果&desp=运行正常\"\r\n      else:\r\n        url = \"https://api.day.app/\" + key + \"/运行正常\"\r\n      response = requests.get(url)\r\n      print(response.text)\r\n\r\n\r\nif __name__ == \"__main__\":\r\n  print(\"这是一段推送测试代码\")\r\n  key = xl(\"k2\", sheet_name=\"CONFIG\")[0][0] # 访问表格\r\n  print(key)\r\n  keyarry = key.split(\"&\")\r\n  for i in range(len(keyarry)):\r\n    pushType = keyarry[i].split(\"=\")[0]\r\n    key = keyarry[i].split(\"=\")[1]\r\n    push(pushType, key)\r\n\r\n\r\n\r\n  \r\n"
-    testKey = "bark=&pushplus=&ServerChan="
+    // testPythonScript = "import requests\r\n\r\n# 推送\r\ndef push(pushType, key):\r\n  if key != \"\" :\r\n      if pushType.lower() == \"bark\":\r\n        url = \"https://api.day.app/\" + key + \"/运行正常\"\r\n      elif pushType.lower()  == \"pushplus\":\r\n        url = \"http://www.pushplus.plus/send?token=\" + key + \"&content=运行正常\"\r\n      elif pushType.lower()  == \"serverchan\":\r\n        url = \"https://sctapi.ftqq.com/\" + key + \".send?title=运行结果&desp=运行正常\"\r\n      else:\r\n        url = \"https://api.day.app/\" + key + \"/运行正常\"\r\n      response = requests.get(url)\r\n      print(response.text)\r\n\r\n\r\nif __name__ == \"__main__\":\r\n  print(\"这是一段推送测试代码\")\r\n  key = xl(\"k2\", sheet_name=\"CONFIG\")[0][0] # 访问表格\r\n  print(key)\r\n  keyarry = key.split(\"&\")\r\n  for i in range(len(keyarry)):\r\n    pushType = keyarry[i].split(\"=\")[0]\r\n    key = keyarry[i].split(\"=\")[1]\r\n    push(pushType, key)\r\n\r\n\r\n\r\n  \r\n"
+    let testKey = "bark=&pushplus=&ServerChan="
+    let urlScript = "https://netcut.cn/p/9aa97e54eb186c06"  // 推送测试代码
     let content = [
-      ['任务的名称', '备注', '更新时间', '消息', '推送时间', '推送方式',  '是否通知', '是否加入消息池', '是否执行', '脚本', '脚本传入参数', '定时时间'],
-      ['任务1', '随便填给自己看的', '', '' , '' , '@all' , '是', '否' , '是' , testPythonScript, testKey, '8:00' ],
-      ['任务2', '任务3通知', '', '' , '' , '@all' , '是', '否' , '否' , '', '', '8:10' ],
-      ['任务3', '任务3通知', '', '' , '' , '@all' , '是', '否' , '否' , '', '', '9:00' ],
+      ['任务的名称', '备注', '更新时间', '消息', '推送时间', '推送方式',  '是否通知', '是否加入消息池', '是否执行', '脚本', '脚本传入参数', '定时时间', '脚本地址', '脚本唯一id', '脚本密码', '脚本更新时间'],
+      ['任务1', '任务1通知', '', '' , '' , '@all' , '是', '否' , '是' , '', testKey, '8:10' , urlScript, '' , '', ''],
+      ['任务2', '任务2通知', '', '' , '' , '@all' , '是', '否' , '否' , '', '', '8:10' , '', '', '', ''],
+      ['任务3', '任务3通知', '', '' , '' , '@all' , '是', '否' , '否' , '', '', '9:00' , '', '', '', ''],
+      ['任务4', '任务4通知', '', '' , '' , '@all' , '是', '否' , '否' , '', '', '10:00' , '', '', '', ''],
     ]
     determineRowCol() // 读取函数
     if(row <= 1 || col < content[0].length){ // 说明是空表或只有表头未填写内容，或者表格有新增列内容则需要先填写
@@ -318,9 +215,101 @@ function createConfig(){
       editConfigSheet(content)
     }
   }
+  sleep(3000)
 
   return flagExitContent
+}
+
+
+
+// 获取wps_sid、cookie
+function getWpsSid(){
+  // flagConfig = ActivateSheet(sheetNameSubConfig); // 激活wps配置表
+  // 主配置工作表存在
+  if (1) {
+    console.log("🍳 开始读取" + sheetNameSubConfig + "配置表");
+    for (let i = 2; i <= 100; i++) {
+      // 读取wps表格配置
+      wps_sid = Application.Range("A" + i).Text; // 以第一个wps为准
+      // name = Application.Range("H" + i).Text;
+      
+      excludeDocs = Application.Range("C" + i).Text.split("&")
+      onlyDocs = Application.Range("D" + i).Text.split("&")
+
+      break
+    }
+  }
+  return wps_sid
+  // filename = name
+}
+
+
+// ======================生成表修改相关结束======================
+
+
+// ======================文档检索相关开始======================
+
+// 判断是否为xlsx文件
+function juiceXLSX(name){
+  let flag = 0
+  let array= name.split(".") // 使用|作为分隔符
+  if(array.length == 2 && (array[1] == "xlsx" || array[1] == "ksheet")){
+    flag = 1
+  }
+  return flag 
+}
+
+// 判断是否为要排除文件
+function juiceDocs(name){
+  let flag = 0
+  if((excludeDocs.length == 1 && excludeDocs[0] == "") || excludeDocs.length == 0){
+    flag = 0
+    // console.log("excludeDocs不符合")
+  }else{
+    for(let i= 0; i<excludeDocs.length; i++){
+      if(name == excludeDocs[i]){
+        flag = 1  // 找到要排除的文档了
+        // console.log("找到要排除的文档了")
+      }
+    }
+  }
+  return flag 
+}
+
+// 判断是否为仅读取的文档
+function juiceOnlyRead(name){
+  let flag = 0  // 不读取
+  if(onlyDocs == "@all"){
+    flag = 1  // 所有都读取
+    // console.log("所有都读取")
+  }else{
+    for(let i= 0; i<onlyDocs.length; i++){
+      if(name == onlyDocs[i]){
+        flag = 1  // 找到要读取的文档了
+        // console.log("找到要读取的文档了")
+      }
+    }
+  }
   
+  return flag 
+}
+
+// 判断是否存在定时任务
+function taskExist(file_id){
+  url = "https://www.kdocs.cn/api/v3/ide/file/" + file_id + "/cron_tasks";
+  // console.log(url)
+  // 查看定时任务
+  resp = HTTP.get(
+    url,
+    { headers: headers }
+  );
+
+  resp = resp.json()
+  // console.log(resp)
+  // list -> 数组 -> file_id、task_id、script_name，cron_detail->字典
+  cronlist = resp["list"]
+  sleep(3000)
+  return cronlist
 }
 
 // 获取file_id
@@ -350,27 +339,8 @@ function getFile(url){
   }
 
   // console.log(taskArray)
-  
   sleep(3000)
   return flag
-}
-
-// python脚本列表
-function pyScriptList(file_id){
-  let url = "https://www.kdocs.cn/api/v3/ide/file/" + file_id + "/script?ext=py"
-  // console.log(url)
-  // 查看定时任务
-  let resp = HTTP.get(
-    url,
-    { headers: headers }
-  );
-
-  resp = resp.json()
-  // console.log(resp)
-
-  let list = resp["data"]
-  sleep(3000)
-  return list
 }
 
 // 判断是否存在某脚本，写入script_id
@@ -430,30 +400,118 @@ function existPythonScript(){
   return flagFind
 }
 
-// 执行脚本
-function runScript(url, headers, script){
-  let data = {"sheet_name":"task","script":script}
-  // console.log(data)
-
-  let resp = HTTP.post(
-      url,
-      data,
-      { headers: headers },
+// 获取airScipt_id
+function getAsId(){
+  url = "https://www.kdocs.cn/api/v3/ide/file/" + file_id + "/script"
+  // console.log(url)
+  // 创建定时任务
+  resp = HTTP.get(
+    url,
+    { headers: headers }
   );
+
   resp = resp.json()
-  // {"data":{"grant":{"need":[{"name":"http","open":true},{"name":"smtp","open":true}]}},"result":"ok"}
   // console.log(resp)
-  let result = resp["result"]
-  return result
+  let list = resp["data"]
+  for(let i = 0; i<list.length; i++){
+    let name = list[i].script_name
+    if(name == sheetName){
+      asid =  list[i].id
+      console.log("✨ 写入找到Asid:" + asid)
+    }
+  }
+
+  sleep(5000)
 }
 
+// 初始化，无文档id和脚本id的时候使用
+function init(){
+  // 判断是否以前已写入数据
+  if(ActivateSheet(sheetNameSubConfig)) // 激活wps配置表
+  {
+    // 定时任务id
+    task_id = Application.Range("F2").Value
+    
+    // 读取文档id
+    file_id = Application.Range("C2").Value
+    // console.log(file_id)
+    if(file_id != "" && file_id != 0 && file_id != null){
+      console.log("✨ 已读取文档id")
+    }else{
+      // 无文档id，则写入文档id
+
+      // 获取文档id
+      url = "https://drive.kdocs.cn/api/v5/roaming?count=" + count  // 只对前20条进行判断
+      let flagFindFileid = getFile(url)
+      if(flagFindFileid == 0){
+        console.log("📢 请将本文档名称更改为 " + sheetName + " 然后再运行一次脚本")
+      }else{
+        // 有文档id了
+        // 写入文档id
+        console.log("✨ 写入文档id")
+        let pos = 2
+        Application.Range(colNum[2] + pos).Value = file_id
+      }
+    }
+    
+    // console.log(file_id)
+    if(file_id != "" && file_id != 0){
+      // 读取脚本id
+      let i = 2
+      script_id = Application.Range("D" + i).Text
+      if(script_id != "" && script_id != 0){
+        console.log("✨ 已获取到" + sheetName + "脚本")
+      }else{
+        // 无指定脚本，可能是第一次运行或清空了id，则进行数据写入以及py脚本创建
+
+        // 若是清空了id，脚本还存在，则不创建脚本仅写入id
+        let flagFind = existPythonScript()  // 判断是否存在指定脚本
+        if(flagFind){
+          // 说明已有所需py脚本
+          Application.Range(colNum[3] + "2").Value = script_id
+          console.log("✨ 已有" + sheetName + "脚本，写入最新id")
+        }else{
+          // 无指定的脚本，是第一次运行，则进行数据写入以及py脚本创建
+          
+          // 第一次运行  
+          url = "https://www.kdocs.cn/api/v3/ide/file/" +file_id + "/script"
+          script_id = createPyScript(url, headers)  // 创建脚本
+          // console.log(script_id)
+
+          // 写入脚本id
+          let pos = 2
+          Application.Range(colNum[3] + pos).Value = script_id
+          console.log("✨ 已创建" + sheetName + "脚本")
+          console.log("✨ 请将" + sheetName + "脚本加入定时任务")
+        }
+
+        // 赋予网络api权限
+        change_permission_config()
+
+        // 允许网路请求
+        permissionOn()
+
+      }
+
+      asid = Application.Range("E2").Value
+      // console.log(asid)
+      // 如果没有asid
+      if(asid == "" || asid == "undefined" || asid == null){
+        getAsId()
+        Application.Range("E2").Value = asid
+      }
+      // console.log(asid)
+    }
+  }
+}
+
+// ======================文档检索相关结束======================
+
+
+// ======================定时任务相关开始======================
 // 修改定时任务
 function putTask(url, headers, data, task_id, script_name){
   let flagResult = 0
-  // console.log(url)
-  // console.log(data)
-  // console.log(headers)
-  // console.log(task_id)
   if(task_id == "undefined" || task_id == null || task_id == ""){
     console.log("🎉 创建" + sheetName + "定时任务")
     // 创建定时任务
@@ -506,6 +564,7 @@ function getMonthWeek(){
   let weekdayIndex = date.getDay(); // getDay()返回的是0（星期日）到6（星期六）之间的一个整数
   mw[0] = date.getDate().toString()
   mw[1] = weekdayIndex.toString()
+  // 周日是0
   // if(mw[1] == "0"){ // 星期日返回7
   //   mw[1] = 7
   // }
@@ -530,30 +589,6 @@ function getsysHM(){
   syshm[0] = parseInt(syshours)
   syshm[1] = parseInt(sysminutes)
   return syshm
-}
-
-// 获取airScipt_id
-function getAsId(){
-  url = "https://www.kdocs.cn/api/v3/ide/file/" + file_id + "/script"
-  // console.log(url)
-  // 创建定时任务
-  resp = HTTP.get(
-    url,
-    { headers: headers }
-  );
-
-  resp = resp.json()
-  // console.log(resp)
-  let list = resp["data"]
-  for(let i = 0; i<list.length; i++){
-    let name = list[i].script_name
-    if(name == sheetName){
-      asid =  list[i].id
-      console.log("✨ 写入找到Asid:" + asid)
-    }
-  }
-
-  sleep(5000)
 }
 
 // 数组字符串转整形
@@ -604,22 +639,234 @@ function dictarraySortUpHour(value){
   });
   return value
 }
+// ======================定时任务相关结束======================
 
-// 运行任务
-function runtask(){
-  // 根据task表运行任务
+// ======================PYTHON处理相关开始======================
 
-  // 判断是否有CONFIG表
-  flagConfig = ActivateSheet(sheetNameConfig); // 激活cron配置表
-  // 主配置工作表存在
-  if (flagConfig == 1) {
-    
-    
-    // 执行逻辑：先设置新定时， 再执行py脚本
-    
+// python脚本列表
+function pyScriptList(file_id){
+  let url = "https://www.kdocs.cn/api/v3/ide/file/" + file_id + "/script?ext=py"
+  // console.log(url)
+  // 查看定时任务
+  let resp = HTTP.get(
+    url,
+    { headers: headers }
+  );
+
+  resp = resp.json()
+  // console.log(resp)
+
+  let list = resp["data"]
+  sleep(3000)
+  return list
+}
+
+// 创建脚本
+function createPyScript(url, headers){
+  data = {"script_name": sheetName,"script":"","ext":"py"}
+  let resp = HTTP.post(
+    url,
+    data,
+    { headers: headers }
+  );
+  // {"id":""}
+  resp = resp.json()
+  id = resp["id"]
+
+  return id
+}
+
+
+// 执行脚本
+function runScript(url, headers, script){
+  let data = {"sheet_name":"CONFIG","script":script}
+  let resp = HTTP.post(
+      url,
+      data,
+      { headers: headers },
+  );
+  resp = resp.json()
+  // {"data":{"grant":{"need":[{"name":"http","open":true},{"name":"smtp","open":true}]}},"result":"ok"}
+  // {"err_detail":{},"errmsg":"服务异常，请稍后重试或联系客服（40101）","hint":"用户无权限","message":"UserUnauthorized"}
+  // console.log(resp)
+  let result = resp["result"]
+  return result
+}
+
+// 权限允许
+function permissionOn(){
+  url = "https://www.kdocs.cn/api/v3/ide/file/" + file_id + "/script/" + script_id + "/permission"
+  resp = HTTP.post(
+    url,
+    data,
+    { headers: headers }
+  );
+  // 404 page not found
+  // console.log(resp.text())
+  resp = resp.json()
+  // console.log(resp)
+
+  result = resp["result"]
+  if(result == "ok"){
+    console.log("🎉 已允许网络请求")
+  }else{
+     console.log("📢 请手动赋予网络API权限，并点击运行，再点击允许网络请求")
+  }
+  sleep(5000)
+}
+
+// 赋予网络api权限
+function change_permission_config(){
+  url = "https://www.kdocs.cn/api/v3/ide/file/" + file_id + "/script/" + script_id
+ 
+  data = {
+      "change_permission_config": true,
+      "id": script_id,
+      "permission_config": {
+          "ks_drive": {
+              "open": false,
+              "allow_open_all_file": false,
+              "allow_open_files": null
+          },
+          "http": {
+              "open": true,
+              "allow_all_host": true,
+              "allow_hosts": null
+          },
+          "smtp": {
+              "open": true,
+              "allow_all_email": true,
+              "allow_emails": null
+          },
+          "sql": {
+              "open": false
+          }
+      }
+  }
+
+  //  console.log(url)
+  //  console.log(data)
+  resp = HTTP.put(
+    url,
+    data,
+    { headers: headers }
+  );
+  // 404 page not found
+  // console.log(resp.text())
+  resp = resp.json()
+  // console.log(resp)
+
+  result = resp["result"]
+  if(result == "ok"){
+    console.log("🎉 成功赋予网络API权限")
+  }else{
+     console.log("📢 请手动赋予网络API权限")
+  }
+  sleep(5000)
+  // return flagResult
+}
+
+// ======================PYTHON处理相关结束======================
+
+
+// ======================远程脚本相关开始======================
+// 从url获取noteid
+function getnoteid(url){
+  note_id = url.split("/")
+  note_id = note_id[note_id.length - 1]
+  return note_id
+}
+
+// 判断url类型，取域名
+function geturlType(url){
+  result = url.split("/")
+  // console.log(result)
+  result = result[2]
+  return result
+}
+
+// 取唯一id
+function getUniqueId(value){
+  let uniqueIdStr = "uniqueId=\""
+  let uniqueId = ""
+  // 去除内容中的所有空格，但保留换行符
+  value = value.replace(/ +/g, ''); // 使用正则表达式替换所有空格
+
+  // dict = {
+  //   "value" : value
+  // }
+  // console.log(dict)
+
+  let startIndex = value.indexOf(uniqueIdStr) + uniqueIdStr.length; // "idUnique="
+  let endIndex = value.indexOf('"', startIndex); // 从startIndex开始找到换行符的位置
+  if (endIndex === -1) {  // 如果endIndex是-1，说明没有找到换行符，可能整行就是idUnique的值
+      // 提取整个剩余部分
+      uniqueId = value.substring(startIndex).trim();
+  } else {
+      // 提取"idUnique="和换行符之间的内容
+      uniqueId = value.substring(startIndex, endIndex).trim();
+  }
+  // console.log(uniqueId)
+  return uniqueId
+}
+
+// 获取最新脚本
+function getScriptContent(url){
+  // console.log("远程获取最新脚本")
+  let result = []
+  // console.log(url)
+  if(geturlType(url) == "netcut.cn"){ // https://netcut.cn
+    // console.log("netcut.cn")
+    note_id = getnoteid(url)
+    url = "https://api.txttool.cn/netcut/note/info/"
+    // 查看定时任务
+    let headers = {
+      "Content-Type": "application/x-www-form-urlencoded", 
+    }
+    data = {
+      "note_id" : note_id
+    }
+    resp = HTTP.post(
+      url,
+      data = data,
+      { headers: headers }
+    );
+
+    resp = resp.json()
+    // console.log(resp)
+    status = resp["status"]
+    if(status == 1){
+      // console.log("获取数据成功")
+      note_content = resp["data"]["note_content"] // 文本
+      updated_time = resp["data"]["updated_time"] // 更新时间
+
+      result[0] = status
+      result[1] = note_content  // 自定义脚本内容
+      result[2] = updated_time  // 2024-07-20 21:33:22
+      // console.log(result)
+    }else{
+      result[0] = status
+    }
+
+  }else{
+    // console.log("非netcut，可自己定义")
+    result[0] = 0
+  }
+  
+  return result
+}
+// ======================远程脚本相关结束======================
+
+
+// 根据表格创建定时任务任务列表
+function createTaskArray(){
+
+}
+
+// 安排定时任务
+function schedule(){
     // 找到下一次执行脚本的定时
     // 获取系统时间，比对时间，找到最接近的靠后（右边）的时间，相对则最优先
-
 
     // 处理任务列表的时间，记录时分及位置
     // 排序时间
@@ -627,7 +874,6 @@ function runtask(){
     
     // 读取生成任务列表
     let pos = 0
-    let hourarry = []
     for(let t = 0; t < maxRow; t++){
       pos = t + 2
       script_name = Application.Range(colNum[0] + pos).Text 
@@ -707,7 +953,6 @@ function runtask(){
       }else{
         minute = minuteExpect
       }
-
     }
 
     // console.log("任务索引：" , index)
@@ -779,229 +1024,114 @@ function runtask(){
 
     console.log("✨ 已将下一个任务安排进定时任务中")
 
-    // 运行定时任务
-    // 取设定时的前一个任务来运行，即当前应该运行的任务
-    if(index <= 0){
-      pos = taskArray[0]["pos"]
-    }else{
-      pos = taskArray[index - 1]["pos"]
-    }
-    // console.log("✨ 执行当前任务位置：" , pos)
+    return index
+}
 
-    // 安排下一个任务进定时任务中
+// 更新脚本及运行脚本
+function scriptHandle(){
+  // 运行定时任务
+  // 取设定时的前一个任务来运行，即当前应该运行的任务
+  if(index <= 0){
+    pos = taskArray[0]["pos"]
+  }else{
+    pos = taskArray[index - 1]["pos"]
+  }
+  // console.log("✨ 执行当前任务位置：" , pos)
 
-    // 调用执行py脚本
-    console.log("✨ 已获取到" + sheetNameConfig + "表，开始注入任务")
-    // let pos = 2
+  // 安排下一个任务进定时任务中
+  // 调用执行py脚本
+  console.log("✨ 已获取到" + sheetNameConfig + "表，开始注入任务")
+
+  // 尝试获取最新脚本
+  url = Application.Range(colNum[12] + pos).Text 
+  // console.log(url)
+  if(url == "" || url == null || url == undefined)
+  {
+    console.log("✨ 读取本地脚本")
+    // 如果脚本地址为空，则直接取本地脚本
     script = Application.Range(colNum[9] + pos).Text 
-    // console.log(script)
-    script_name = Application.Range(colNum[1] + pos).Text 
-    // console.log(script_name)
-    // 执行脚本
-    // file_id = parseInt(file_id)
-    url = "https://www.kdocs.cn/api/aigc/pyairscript/v2/" + file_id + "/script/" + script_id + "/exec"
-    // console.log(url)
-    let result = runScript(url, headers, script)
-    
-    if(result == "ok"){
-      console.log("✨ " + script_name + " 已执行")
+  }else{
+    password = Application.Range(colNum[14] + pos).Text 
+    excelupdateTime = Application.Range(colNum[15] + pos).Text 
+    noteScript = getScriptContent(url) // 获取脚本
+    // console.log(noteScript)
+    if(noteScript[0] == 1){
+      script = noteScript[1]
+      scriptUpdateTime = noteScript[2]
+      // 根据脚本比对脚本更新时间
+      if(scriptUpdateTime != excelupdateTime){  // 时间不等，说明要更新脚本
+        console.log("✨ 更新时间", scriptUpdateTime)
+        console.log("✨ 存在最新脚本，进行脚本更新")
+        Application.Range(colNum[9] + pos).Value =  script
+        Application.Range(colNum[15] + pos).Value =  scriptUpdateTime
+      }else{
+        onsole.log("✨ 已是最新脚本，不进行脚本更新")
+      }
+
     }else{
-      console.log("📢 " + script_name + "执行失败")
+      // 返回失败，用本地脚本
+      // console.log("返回失败，用本地脚本")
+      script = Application.Range(colNum[9] + pos).Text 
     }
+  }
+
+  // 脚本唯一id，用于python获取脚本位置
+  // 从脚本中获取唯一id
+  uniqueId = getUniqueId(script)
+  // console.log(uniqueId)
+  Application.Range(colNum[13] + pos).Value =  uniqueId
+
+  // console.log(script)
+  script_name = Application.Range(colNum[1] + pos).Text 
+  // console.log(script_name)
+  // 执行脚本
+  // file_id = parseInt(file_id)
+  url = "https://www.kdocs.cn/api/aigc/pyairscript/v2/" + file_id + "/script/" + script_id + "/exec"
+  // console.log(url)
+  let result = runScript(url, headers, script) // 运行脚本
+  
+  if(result == "ok"){
+    console.log("✨ " + script_name + " 已执行")
+  }else{
+    console.log("📢 " + script_name + "执行失败")
+  }
+}
+
+// 运行任务
+function runtask(){
+  // 根据task表运行任务
+
+  // 判断是否有CONFIG表
+  flagConfig = ActivateSheet(sheetNameConfig); // 激活cron配置表
+
+  if(flagConfig != 1){
+    console.log("📢 " + sheetNameConfig + "表不存在，已进行创建")
+    createConfig()
+    flagConfig = 1
+  }
+  // 主配置工作表存在
+  if (flagConfig == 1) {
+    // 执行逻辑：先设置新定时， 再执行py脚本
+    
+    // 设置定时
+    index = schedule()
+
+    // 运行脚本，即运行当前定时任务
+    scriptHandle(index)
 
     sleep(3000)
     
   }else{
-    createSheet(sheetNameConfig)  
-    console.log("📢 请先填写" + sheetNameConfig + "表中的内容")
+    // createSheet(sheetNameConfig)  
+    console.log("📢 " + sheetNameConfig + "表不存在，已进行创建")
+    createConfig()
+    // console.log("📢 请先填写" + sheetNameConfig + "表中的内容")
   }
 
 
 }
 
-// 权限允许
-function permissionOn(){
-  url = "https://www.kdocs.cn/api/v3/ide/file/" + file_id + "/script/" + script_id + "/permission"
-  resp = HTTP.post(
-    url,
-    data,
-    { headers: headers }
-  );
-  // 404 page not found
-  // console.log(resp.text())
-  resp = resp.json()
-  // console.log(resp)
-
-  result = resp["result"]
-  if(result == "ok"){
-    console.log("🎉 已允许网络请求")
-  }else{
-     console.log("📢 请手动赋予网络API权限，并点击运行，再点击允许网络请求")
-  }
-  sleep(5000)
-}
-
-// 赋予网络api权限
-function change_permission_config(){
-  url = "https://www.kdocs.cn/api/v3/ide/file/" + file_id + "/script/" + script_id
- 
-  data = {
-      "change_permission_config": true,
-      "id": script_id,
-      "permission_config": {
-          "ks_drive": {
-              "open": false,
-              "allow_open_all_file": false,
-              "allow_open_files": null
-          },
-          "http": {
-              "open": true,
-              "allow_all_host": true,
-              "allow_hosts": null
-          },
-          "smtp": {
-              "open": true,
-              "allow_all_email": true,
-              "allow_emails": null
-          },
-          "sql": {
-              "open": false
-          }
-      }
-  }
-
-  //  console.log(url)
-  //  console.log(data)
-  resp = HTTP.put(
-    url,
-    data,
-    { headers: headers }
-  );
-  // 404 page not found
-  // console.log(resp.text())
-  resp = resp.json()
-  // console.log(resp)
-
-  result = resp["result"]
-  if(result == "ok"){
-    console.log("🎉 成功赋予网络API权限")
-  }else{
-     console.log("📢 请手动赋予网络API权限")
-  }
-  sleep(5000)
-  // return flagResult
-}
-
-// 初始化，无文档id和脚本id的时候使用
-function init(){
-  // try{
-  //   Application.Sheets.Item(sheetName).Delete()  // 为了获得最新数据，删除表
-  //   storeWorkbook()
-  // }catch{
-  //   console.log("🍳 不存在" + sheetName + "表，开始进行创建")
-  // }
-  // 判断是否以前已写入数据
-  if(ActivateSheet(sheetNameSubConfig)) // 激活wps配置表
-  {
-    // 定时任务id
-    task_id = Application.Range("F2").Value
-    
-    // 读取文档id
-    file_id = Application.Range("C2").Value
-    // console.log(file_id)
-    if(file_id != "" && file_id != 0 && file_id != null){
-      console.log("✨ 已读取文档id")
-    }else{
-      // 无文档id，则写入文档id
-
-      // 获取文档id
-      url = "https://drive.kdocs.cn/api/v5/roaming?count=" + count  // 只对前20条进行判断
-      let flagFindFileid = getFile(url)
-      if(flagFindFileid == 0){
-        console.log("📢 请将本文档名称更改为 " + sheetName + " 然后再运行一次脚本")
-      }else{
-        // 有文档id了
-        // 写入文档id
-        console.log("✨ 写入文档id")
-        let pos = 2
-        Application.Range(colNum[2] + pos).Value = file_id
-      }
-    }
-    
-    // console.log(file_id)
-    if(file_id != "" && file_id != 0){
-      // 读取脚本id
-      let i = 2
-      script_id = Application.Range("D" + i).Text
-      if(script_id != "" && script_id != 0){
-        console.log("✨ 已获取到" + sheetName + "脚本")
-      }else{
-        // 无指定脚本，可能是第一次运行或清空了id，则进行数据写入以及py脚本创建
-
-        // 若是清空了id，脚本还存在，则不创建脚本仅写入id
-        let flagFind = existPythonScript()  // 判断是否存在指定脚本
-        if(flagFind){
-          // 说明已有所需py脚本
-          Application.Range(colNum[3] + "2").Value = script_id
-          console.log("✨ 已有" + sheetName + "脚本，写入最新id")
-        }else{
-          // 无指定的脚本，是第一次运行，则进行数据写入以及py脚本创建
-          
-          // 第一次运行  
-          url = "https://www.kdocs.cn/api/v3/ide/file/" +file_id + "/script"
-          script_id = createPyScript(url, headers)  // 创建脚本
-          // console.log(script_id)
-
-          // 写入脚本id
-          let pos = 2
-          Application.Range(colNum[3] + pos).Value = script_id
-          console.log("✨ 已创建" + sheetName + "脚本")
-          console.log("✨ 请将" + sheetName + "脚本加入定时任务")
-        }
-
-        // 赋予网络api权限
-        change_permission_config()
-
-        // 允许网路请求
-        permissionOn()
-
-      }
-
-      asid = Application.Range("E2").Value
-      // console.log(asid)
-      // 如果没有asid
-      if(asid == "" || asid == "undefined" || asid == null){
-        getAsId()
-        Application.Range("E2").Value = asid
-      }
-      // console.log(asid)
-    }
-
-  }
-    
-
-  
-  // // 获取file_id
-  // url = "https://drive.kdocs.cn/api/v5/roaming?count=" + count  // 只对前20条进行判断
-  // let flagFind = getFile(url)
-  // if(flagFind){
-  //   // 说明已创建所需py脚本
-  //   console.log("✨ 已有" + sheetName + "脚本")
-  // }else{
-  //   // 无指定脚本，可能是第一次运行，则进行数据写入以及py脚本创建
-
-  //   // 创建脚本
-  //   url = "https://www.kdocs.cn/api/v3/ide/file/xxx/script"
-  //   let id = createPyScript(url, headers)
-  //   console.log(id)
-
-  //   writeTask()
-  //   console.log("✨ 已完成对" + sheetName + "表的写入，请到" + sheetName + "表进行配置")
-  //   console.log("✨ 然后将" + sheetName + "脚本加入定时任务，即可自动调整定时任务时间")
-  // }
-
-}
-
+// 主程序入口
 function main(){
   storeWorkbook()
   let flagExitContent = createWpsConfig()
@@ -1011,8 +1141,8 @@ function main(){
   }else{
     wps_sid = getWpsSid() // 获取wps_sid
     cookie = "wps_sid=" + wps_sid // 获取cookie
-    // console.log(excludeDocs)
 
+    // 全局headers
     headers = {
       "Cookie": cookie,
       "Content-Type" : "application/json",
@@ -1020,14 +1150,13 @@ function main(){
       "Priority":"u=1, i",
     }
     
-    
     // 获取定时任务,生成CRON定时任务表
     init()
 
     // 执行脚本
     runtask()
   }
-
 }
+
 
 main()
