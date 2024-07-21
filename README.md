@@ -59,7 +59,7 @@ uniqueId = "xxxx"
 2. 在对应的“脚本地址”中写入分享地址  
 
 ## 🛰️ 如何接入消息推送
-请参考这个项目: https://github.com/wpsPush
+请参考这个项目: https://github.com/imoki/wpsPush  
 
 
 ## 🤝 欢迎参与贡献
