@@ -2,7 +2,7 @@
     作者: imoki
     仓库: https://github.com/imoki/
     公众号：默库
-    更新时间：20240721
+    更新时间：20240724
     脚本：moku.js 粘贴到金山文档内时，请改名为“默库”。
     说明：注意！请将文档名和脚本名都起名为“默库”，脚本才能正常运行。
           1. 第一步，首次运行“默库”脚本（仓库中的“moku.js”）会生成wps表，请先填写好wps表的内容，只填wps_sid即可。
@@ -201,12 +201,13 @@ function createConfig(){
     // testPythonScript = "import requests\r\n\r\n# 推送\r\ndef push(pushType, key):\r\n  if key != \"\" :\r\n      if pushType.lower() == \"bark\":\r\n        url = \"https://api.day.app/\" + key + \"/运行正常\"\r\n      elif pushType.lower()  == \"pushplus\":\r\n        url = \"http://www.pushplus.plus/send?token=\" + key + \"&content=运行正常\"\r\n      elif pushType.lower()  == \"serverchan\":\r\n        url = \"https://sctapi.ftqq.com/\" + key + \".send?title=运行结果&desp=运行正常\"\r\n      else:\r\n        url = \"https://api.day.app/\" + key + \"/运行正常\"\r\n      response = requests.get(url)\r\n      print(response.text)\r\n\r\n\r\nif __name__ == \"__main__\":\r\n  print(\"这是一段推送测试代码\")\r\n  key = xl(\"k2\", sheet_name=\"CONFIG\")[0][0] # 访问表格\r\n  print(key)\r\n  keyarry = key.split(\"&\")\r\n  for i in range(len(keyarry)):\r\n    pushType = keyarry[i].split(\"=\")[0]\r\n    key = keyarry[i].split(\"=\")[1]\r\n    push(pushType, key)\r\n\r\n\r\n\r\n  \r\n"
     let testKey = "bark=&pushplus=&ServerChan="
     let urlScript = "https://netcut.cn/p/9aa97e54eb186c06"  // 推送测试代码
+    let githubScript = "https://raw.kkgithub.com/imoki/wpsPyInf/main/testPush.py" // 测试代码
     let content = [
-      ['任务的名称', '备注', '更新时间', '消息', '推送时间', '推送方式',  '是否通知', '是否加入消息池', '是否执行', '脚本', '脚本传入参数', '定时时间', '脚本地址', '脚本唯一id', '脚本密码', '脚本更新时间'],
-      ['任务1', '任务1通知', '', '' , '' , '@all' , '是', '否' , '是' , '', testKey, '8:10' , urlScript, '' , '', ''],
-      ['任务2', '任务2通知', '', '' , '' , '@all' , '是', '否' , '否' , '', '', '8:10' , '', '', '', ''],
-      ['任务3', '任务3通知', '', '' , '' , '@all' , '是', '否' , '否' , '', '', '9:00' , '', '', '', ''],
-      ['任务4', '任务4通知', '', '' , '' , '@all' , '是', '否' , '否' , '', '', '10:00' , '', '', '', ''],
+      ['任务的名称', '备注', '更新时间', '消息', '推送时间', '推送方式',  '是否通知', '是否加入消息池', '是否执行', '脚本', '脚本传入参数', '定时时间', '脚本地址', '脚本唯一id', '脚本密码', '脚本更新时间', '脚本下载模式'],
+      ['任务1', '任务1通知', '', '' , '' , '@all' , '是', '否' , '是' , '', testKey, '8:10' , urlScript, '' , '', '', ''],
+      ['任务2', '任务2通知', '', '' , '' , '@all' , '是', '否' , '是' , '', testKey, '10:20' , githubScript, '', '', '', 'github'],
+      ['任务3', '任务3通知', '', '' , '' , '@all' , '是', '否' , '否' , '', '', '15:00' , '', '', '', '', ''],
+      ['任务4', '任务4通知', '', '' , '' , '@all' , '是', '否' , '否' , '', '', '17:00' , '', '', '', '', ''],
     ]
     determineRowCol() // 读取函数
     if(row <= 1 || col < content[0].length){ // 说明是空表或只有表头未填写内容，或者表格有新增列内容则需要先填写
@@ -639,6 +640,23 @@ function dictarraySortUpHour(value){
   });
   return value
 }
+
+// 格式化时间。为：2024/7/23 10:01
+function formatDate(dateStr) {
+    // 假设dateStr是有效的日期字符串，格式为"YYYY-MM-DD HH:mm:ss"
+    // 使用split方法将日期字符串拆分为年、月、日、时、分、秒
+    const [datePart, timePart] = dateStr.split(' ');
+    const [year, month, day] = datePart.split('-');
+    const [hour, minute] = timePart.split(':');
+
+    const formattedMonth = month.replace(/^0/, ''); // 删除月份的前导零（如果有）
+    const formattedDay = day.replace(/^0/, ''); // 删除日期的前导零（如果有）
+
+    // 使用数组元素构建新的日期字符串，时间只取到时
+    const formattedDate = `${year}/${formattedMonth}/${formattedDay} ${hour}:${minute}`;
+
+    return formattedDate;
+}
 // ======================定时任务相关结束======================
 
 // ======================PYTHON处理相关开始======================
@@ -810,13 +828,24 @@ function getUniqueId(value){
   return uniqueId
 }
 
+// 判断字符串是否未空，为空返回true
+function juiceNull(value){
+  if(value == "undefined" || value == null || value == "" || value == undefined || value == "NaN"){
+    return true  // 认为值为空
+  }else{
+    return false
+  }
+
+}
+
 // 获取最新脚本
-function getScriptContent(url){
+function getScriptContent(url, downMode){
   // console.log("远程获取最新脚本")
   let result = []
   // console.log(url)
-  if(geturlType(url) == "netcut.cn"){ // https://netcut.cn
-    // console.log("netcut.cn")
+  // console.log(juiceNull(downMode))
+  if(geturlType(url) == "netcut.cn" || juiceNull(downMode)){ // https://netcut.cn
+    console.log("✨ netcut.cn获取脚本")
     note_id = getnoteid(url)
     url = "https://api.txttool.cn/netcut/note/info/"
     // 查看定时任务
@@ -839,17 +868,31 @@ function getScriptContent(url){
       // console.log("获取数据成功")
       note_content = resp["data"]["note_content"] // 文本
       updated_time = resp["data"]["updated_time"] // 更新时间
-
       result[0] = status
       result[1] = note_content  // 自定义脚本内容
-      result[2] = updated_time  // 2024-07-20 21:33:22
+      result[2] = formatDate(updated_time)  // 2024-07-20 21:33:22 -> 2024/7/23 10:00
       // console.log(result)
     }else{
       result[0] = status
     }
 
-  }else{
-    // console.log("非netcut，可自己定义")
+  }else if(downMode == "github"){
+    console.log("✨ github方式获取脚本")
+    let headers = {
+      // "Content-Type": "application/x-www-form-urlencoded", 
+    }
+    resp = HTTP.get(
+      url,
+      { headers: headers }
+    );
+    resp = resp.text()
+    // console.log(resp)
+    result[0] = 1
+    result[1] = resp  // 自定义脚本内容
+    result[2] = Date()  // 2024-07-20 21:33:22
+  }
+  else{
+    console.log("未知下载渠道，不进行下载")
     result[0] = 0
   }
   
@@ -1051,13 +1094,18 @@ function scriptHandle(){
     // 如果脚本地址为空，则直接取本地脚本
     script = Application.Range(colNum[9] + pos).Text 
   }else{
+    // console.log("下载远程脚本")
     password = Application.Range(colNum[14] + pos).Text 
     excelupdateTime = Application.Range(colNum[15] + pos).Text 
-    noteScript = getScriptContent(url) // 获取脚本
+    downMode = Application.Range(colNum[16] + pos).Text // 脚本下载模式
+    // console.log(downMode)
+    noteScript = getScriptContent(url, downMode) // 获取脚本
     // console.log(noteScript)
     if(noteScript[0] == 1){
       script = noteScript[1]
       scriptUpdateTime = noteScript[2]
+      // console.log(scriptUpdateTime)
+      // console.log(excelupdateTime)
       // 根据脚本比对脚本更新时间
       if(scriptUpdateTime != excelupdateTime){  // 时间不等，说明要更新脚本
         console.log("✨ 更新时间", scriptUpdateTime)
@@ -1065,7 +1113,7 @@ function scriptHandle(){
         Application.Range(colNum[9] + pos).Value =  script
         Application.Range(colNum[15] + pos).Value =  scriptUpdateTime
       }else{
-        onsole.log("✨ 已是最新脚本，不进行脚本更新")
+        console.log("✨ 已是最新脚本，不进行脚本更新")
       }
 
     }else{
