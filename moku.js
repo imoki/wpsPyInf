@@ -26,7 +26,7 @@ var col = 0;
 var maxRow = 100; // 规定最大行
 var maxCol = 26; // 规定最大列
 var workbook = [] // 存储已存在表数组
-var colNum = ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M', 'N', 'O', 'P', 'Q']
+var colNum = ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M', 'N', 'O', 'P', 'Q', 'R', 'S', 'T', 'U', 'V', 'W', 'X', 'Y', 'Z']
 
 // 定时任务相关
 var hourMin = 0
@@ -204,11 +204,11 @@ function createConfig(){
     let githubProxyScript = "https://raw.kkgithub.com/imoki/wpsPyInf/main/testPush.py" // 代理，测试代码
     let githubScript = "https://github.com/imoki/wpsPyInf/blob/main/testPush.py"  // 直链，测试代码
     let content = [
-      ['任务的名称', '备注', '更新时间', '消息', '推送时间', '推送方式',  '是否通知', '是否加入消息池', '是否执行', '脚本', '脚本传入参数', '定时时间', '脚本地址', '脚本唯一id', '脚本密码', '脚本更新时间', '脚本下载模式'],
-      ['任务1', '任务1通知', '', '' , '' , '@all' , '是', '否' , '是' , '', testKey, '8:10' , urlScript, '' , '', '', ''],
-      ['任务2', '任务2通知', '', '' , '' , '@all' , '是', '否' , '是' , '', testKey, '10:20' , githubProxyScript, '', '', '', 'githubproxy'],
-      ['任务3', '任务3通知', '', '' , '' , '@all' , '是', '否' , '是' , '', testKey, '15:00' , githubScript, '', '', '', 'github'],
-      ['任务4', '任务4通知', '', '' , '' , '@all' , '是', '否' , '否' , '', '', '17:00' , '', '', '', '', ''],
+      ['任务的名称', '备注', '更新时间', '消息', '推送时间', '推送方式',  '是否通知', '是否加入消息池', '是否执行', '脚本', '脚本传入参数', '定时时间', '脚本地址', '脚本唯一id', '脚本密码', '脚本更新时间', '脚本下载模式', '是否禁止更新'],
+      ['任务1', '任务1通知', '', '' , '' , '@all' , '是', '否' , '是' , '', testKey, '8:10' , urlScript, '' , '', '', '', '否'],
+      ['任务2', '任务2通知', '', '' , '' , '@all' , '是', '否' , '是' , '', testKey, '10:20' , githubProxyScript, '', '', '', 'githubproxy', '否'],
+      ['任务3', '任务3通知', '', '' , '' , '@all' , '是', '否' , '是' , '', testKey, '15:00' , githubScript, '', '', '', 'github', '否'],
+      ['任务4', '任务4通知', '', '' , '' , '@all' , '是', '否' , '否' , '', '', '17:00' , '', '', '', '', '', '否'],
     ]
     determineRowCol() // 读取函数
     if(row <= 1 || col < content[0].length){ // 说明是空表或只有表头未填写内容，或者表格有新增列内容则需要先填写
@@ -1122,33 +1122,44 @@ function scriptHandle(){
     // 如果脚本地址为空，则直接取本地脚本
     script = Application.Range(colNum[9] + pos).Text 
   }else{
-    // console.log("下载远程脚本")
+    // console.log("✨ 下载远端脚本")
     password = Application.Range(colNum[14] + pos).Text 
     excelupdateTime = Application.Range(colNum[15] + pos).Text 
     downMode = Application.Range(colNum[16] + pos).Text // 脚本下载模式
-    // console.log(downMode)
-    noteScript = getScriptContent(url, downMode) // 获取脚本
-    // console.log(noteScript)
-    if(noteScript[0] == 1){
-      script = noteScript[1]
-      scriptUpdateTime = noteScript[2]
-      // console.log(scriptUpdateTime)
-      // console.log(excelupdateTime)
-      // 根据脚本比对脚本更新时间
-      if(scriptUpdateTime != excelupdateTime){  // 时间不等，说明要更新脚本
-        console.log("✨ 更新时间", scriptUpdateTime)
-        console.log("✨ 存在最新脚本，进行脚本更新")
-        Application.Range(colNum[9] + pos).Value =  script
-        Application.Range(colNum[15] + pos).Value =  scriptUpdateTime
+    updateMode = Application.Range(colNum[17] + pos).Text // 是否禁止更新
+    if(updateMode == "否"){ // 不禁止更新
+      // console.log(downMode)
+      noteScript = getScriptContent(url, downMode) // 获取脚本
+      // console.log(noteScript)
+      if(noteScript[0] == 1){
+        script = noteScript[1]
+        scriptUpdateTime = noteScript[2]
+        // console.log(scriptUpdateTime)
+        // console.log(excelupdateTime)
+        // 根据脚本比对脚本更新时间
+        if(scriptUpdateTime != excelupdateTime){  // 时间不等，说明要更新脚本
+          console.log("✨ 更新时间", scriptUpdateTime)
+          console.log("✨ 存在最新脚本，进行脚本更新")
+          Application.Range(colNum[9] + pos).Value =  script
+          Application.Range(colNum[15] + pos).Value =  scriptUpdateTime
+        }else{
+          console.log("✨ 已是最新脚本，不进行脚本更新")
+        }
       }else{
-        console.log("✨ 已是最新脚本，不进行脚本更新")
+        // 返回失败，用本地脚本
+        // console.log("返回失败，用本地脚本")
+        script = Application.Range(colNum[9] + pos).Text 
       }
 
     }else{
-      // 返回失败，用本地脚本
-      // console.log("返回失败，用本地脚本")
+      console.log("✨ 已禁止更新此脚本，不进行脚本更新")
+      // 用本地脚本
+      // console.log("用本地脚本")
       script = Application.Range(colNum[9] + pos).Text 
     }
+
+
+
   }
 
   // 脚本唯一id，用于python获取脚本位置
@@ -1185,6 +1196,14 @@ function runtask(){
     createConfig()
     flagConfig = 1
   }
+  // else{
+  //   // 会重写CONFIG表
+  //   console.log("✨ " + sheetNameConfig + "表存在，重写CONFIG表")
+  //   createConfig()
+  //   // flagConfig = 1
+  // }
+  
+
   // 主配置工作表存在
   if (flagConfig == 1) {
     // 执行逻辑：先设置新定时， 再执行py脚本
