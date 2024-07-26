@@ -28,7 +28,7 @@
 4. 可接受python接受传参数
 5. 可接入消息推送
 6. 可自动更新脚本
-7. 支持netcut、github脚本下载
+7. 支持netcut、github代理、github脚本下载
 
 ## ✨ 特性
     - 📀 支持金山文档运行
@@ -48,6 +48,14 @@
 3. 再运行一次“默库”脚本，此时你将收到推送通知，说明你操作正确，可正常使用了。(这一步可以跳过)
 4. 请在CONFIG表填写你自己写的python脚本和定时时间，然后运行一次“默库”脚本，即可按照配置好的来执行脚本，就不需要再管了。
 
+## 🛰️ CONFIG表内容
+![](https://s3.bmp.ovh/imgs/2024/07/26/d4f569687ade2c29.png)
+
+## 🛰️ 远程脚本下载脚本模式
+1. netcut   --  从netcut.cn中下载，如：https://netcut.cn/p/9aa97e54eb186c06
+2. githubproxy  --  从github代理下载，如：https://raw.kkgithub.com/imoki/wpsPyInf/main/testPush.py
+3. github   --  从github直接下载，如：https://github.com/imoki/wpsPyInf/blob/main/testPush.py
+
 ## 🛰️ 动态更新远程的python脚本如何接入此项目
 1. 请将python脚本写入netcut中
 ```
@@ -63,7 +71,6 @@ uniqueId = "xxxx"
 ## 🛰️ 如何接入消息推送
 请参考这个项目: https://github.com/imoki/wpsPush  
 
-
 ## 🤝 欢迎参与贡献
 欢迎各种形式的贡献
 
@@ -78,6 +85,8 @@ uniqueId = "xxxx"
 [![][starchart-shield]][starchart-link]
 
 ## 📝 更新日志 
+- 2024-07-26
+    * 增加从github直链下载脚本的功能
 - 2024-07-24
     * 修复时间写入和取出表格时被金山自动进行格式化的问题，防止重复更新脚本
     * 增加从github代理下载脚本的功能

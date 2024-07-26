@@ -2,7 +2,7 @@
     作者: imoki
     仓库: https://github.com/imoki/
     公众号：默库
-    更新时间：20240724
+    更新时间：20240726
     脚本：moku.js 粘贴到金山文档内时，请改名为“默库”。
     说明：注意！请将文档名和脚本名都起名为“默库”，脚本才能正常运行。
           1. 第一步，首次运行“默库”脚本（仓库中的“moku.js”）会生成wps表，请先填写好wps表的内容，只填wps_sid即可。
@@ -201,12 +201,13 @@ function createConfig(){
     // testPythonScript = "import requests\r\n\r\n# 推送\r\ndef push(pushType, key):\r\n  if key != \"\" :\r\n      if pushType.lower() == \"bark\":\r\n        url = \"https://api.day.app/\" + key + \"/运行正常\"\r\n      elif pushType.lower()  == \"pushplus\":\r\n        url = \"http://www.pushplus.plus/send?token=\" + key + \"&content=运行正常\"\r\n      elif pushType.lower()  == \"serverchan\":\r\n        url = \"https://sctapi.ftqq.com/\" + key + \".send?title=运行结果&desp=运行正常\"\r\n      else:\r\n        url = \"https://api.day.app/\" + key + \"/运行正常\"\r\n      response = requests.get(url)\r\n      print(response.text)\r\n\r\n\r\nif __name__ == \"__main__\":\r\n  print(\"这是一段推送测试代码\")\r\n  key = xl(\"k2\", sheet_name=\"CONFIG\")[0][0] # 访问表格\r\n  print(key)\r\n  keyarry = key.split(\"&\")\r\n  for i in range(len(keyarry)):\r\n    pushType = keyarry[i].split(\"=\")[0]\r\n    key = keyarry[i].split(\"=\")[1]\r\n    push(pushType, key)\r\n\r\n\r\n\r\n  \r\n"
     let testKey = "bark=&pushplus=&ServerChan="
     let urlScript = "https://netcut.cn/p/9aa97e54eb186c06"  // 推送测试代码
-    let githubScript = "https://raw.kkgithub.com/imoki/wpsPyInf/main/testPush.py" // 测试代码
+    let githubProxyScript = "https://raw.kkgithub.com/imoki/wpsPyInf/main/testPush.py" // 代理，测试代码
+    let githubScript = "https://github.com/imoki/wpsPyInf/blob/main/testPush.py"  // 直链，测试代码
     let content = [
       ['任务的名称', '备注', '更新时间', '消息', '推送时间', '推送方式',  '是否通知', '是否加入消息池', '是否执行', '脚本', '脚本传入参数', '定时时间', '脚本地址', '脚本唯一id', '脚本密码', '脚本更新时间', '脚本下载模式'],
       ['任务1', '任务1通知', '', '' , '' , '@all' , '是', '否' , '是' , '', testKey, '8:10' , urlScript, '' , '', '', ''],
-      ['任务2', '任务2通知', '', '' , '' , '@all' , '是', '否' , '是' , '', testKey, '10:20' , githubScript, '', '', '', 'github'],
-      ['任务3', '任务3通知', '', '' , '' , '@all' , '是', '否' , '否' , '', '', '15:00' , '', '', '', '', ''],
+      ['任务2', '任务2通知', '', '' , '' , '@all' , '是', '否' , '是' , '', testKey, '10:20' , githubProxyScript, '', '', '', 'githubproxy'],
+      ['任务3', '任务3通知', '', '' , '' , '@all' , '是', '否' , '是' , '', testKey, '15:00' , githubScript, '', '', '', 'github'],
       ['任务4', '任务4通知', '', '' , '' , '@all' , '是', '否' , '否' , '', '', '17:00' , '', '', '', '', ''],
     ]
     determineRowCol() // 读取函数
@@ -838,6 +839,15 @@ function juiceNull(value){
 
 }
 
+// [] -> string， 添加换行，用于GitHub响应处理
+function arrayToStr(value){
+  let script = ""
+  for(let i =0; i<value.length; i++){
+    script += value[i] + "\n"
+  }
+  return script
+}
+
 // 获取最新脚本
 function getScriptContent(url, downMode){
   // console.log("远程获取最新脚本")
@@ -876,8 +886,8 @@ function getScriptContent(url, downMode){
       result[0] = status
     }
 
-  }else if(downMode == "github"){
-    console.log("✨ github方式获取脚本")
+  }else if(downMode == "githubproxy"){
+    console.log("✨ github代理方式获取脚本")
     let headers = {
       // "Content-Type": "application/x-www-form-urlencoded", 
     }
@@ -889,6 +899,24 @@ function getScriptContent(url, downMode){
     // console.log(resp)
     result[0] = 1
     result[1] = resp  // 自定义脚本内容
+    result[2] = Date()  // 2024-07-20 21:33:22
+  }else if(downMode == "github"){
+    console.log("✨ github直链方式获取脚本")
+    let headers = {
+      "Accept": "application/json",
+    }
+    // console.log(url)
+    resp = HTTP.get(
+      url,
+      { headers: headers }
+    );
+    resp = resp.json()
+    // console.log(resp)
+    let rawLines = resp["payload"]["blob"]["rawLines"]  // 数组
+    let script = arrayToStr(rawLines)
+    // console.log(script)
+    result[0] = 1
+    result[1] = script  // 自定义脚本内容
     result[2] = Date()  // 2024-07-20 21:33:22
   }
   else{
@@ -1163,6 +1191,7 @@ function runtask(){
     
     // 设置定时
     index = schedule()
+    // console.log(index)
 
     // 运行脚本，即运行当前定时任务
     scriptHandle(index)
