@@ -1,6 +1,7 @@
 <div align="center">
     <img src="https://socialify.git.ci/imoki/wpsPyInf/image?description=1&font=Rokkitt&forks=1&issues=1&language=1&owner=1&pattern=Circuit%20Board&pulls=1&stargazers=1&theme=Dark">
 <h1>默代理</h1>
+<h1>（已失效）</h1>
 基于「金山文档」的python任务代理
 
 <div id="shield">
